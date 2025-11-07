@@ -1,0 +1,42 @@
+# Simple MinGW64 Makefile for raylib
+
+APP_NAME := GrosNounours
+BIN_DIR := bin
+# Sources: racine + sous-dossiers mini-jeux
+SRC := $(wildcard src/*.c) \
+	$(wildcard src/minigames/*/*.c)
+OBJ := $(SRC:.c=.o)
+
+# Ressource Windows (icône) – optionnelle si assets/icon.ico existe
+WINDRES := windres
+ICON := $(wildcard assets/icon.ico)
+RC :=
+RES :=
+ifeq ($(ICON),assets/icon.ico)
+RC := resources/icon.rc
+RES := $(RC:.rc=.res)
+endif
+
+CC := gcc
+# Ajout des chemins d'en-têtes du projet
+CFLAGS := -O2 -Wall -Wextra -Wno-missing-field-initializers -I/mingw64/include -Isrc -Isrc/minigames
+LDFLAGS := -L/mingw64/lib -lraylib -lwinmm -lgdi32 -luser32 -lshell32 -lole32 -ladvapi32 -luuid
+
+$(BIN_DIR)/$(APP_NAME).exe: $(SRC) $(RES)
+	@mkdir -p $(BIN_DIR)
+	$(CC) $(CFLAGS) $(SRC) $(RES) -o $@ $(LDFLAGS)
+
+# Règle pour compiler la ressource si présente
+ifneq ($(RC),)
+resources/%.res: resources/%.rc
+	$(WINDRES) $< -O coff -o $@
+endif
+
+.PHONY: run clean
+run: $(BIN_DIR)/$(APP_NAME).exe
+	./$(BIN_DIR)/$(APP_NAME).exe
+
+clean:
+	rm -f $(OBJ) $(BIN_DIR)/$(APP_NAME).exe resources/*.res
+
+
